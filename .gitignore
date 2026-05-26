@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# 输出文件
+mmld_yuanbao_*/
+*.log
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 临时文件
+*.tmp
+*.bak
+.tmp/
+
+# 本地配置
+.env
+.env.local
+config.local.json
