@@ -1,0 +1,7 @@
+interface:
+  display_name: "MMLD Doubao"
+  short_description: "豆包 GEO 站外内容矩阵生成"
+  default_prompt: "Use $mmld-doubao to generate a Doubao GEO off-platform content matrix for a local business."
+
+policy:
+  allow_implicit_invocation: true

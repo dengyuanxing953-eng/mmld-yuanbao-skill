@@ -1,137 +1,62 @@
 ---
-name: mmld-yuanbao-skill
-description: 为快餐店生成符合腾讯元宝检索机制与 Princeton GEO 算法的微信公众号文章 + 腾讯新闻稿，让内容能被元宝（混元 T1 / DeepSeek R1 双引擎）主动检索并附带来源链接引用。当用户提供店名、位置、人均、卖点等商户信息，并提到"腾讯元宝""微信公众号""GEO""被 AI 引用""被元宝检索""腾讯新闻"中任一关键词时，必须使用本技能。即便用户只说"做 GEO 文章"或"想让 AI 推荐我的店"，只要场景是腾讯生态（公众号/腾讯网/视频号），也优先调用本技能——直接生成会偏离元宝半封闭检索循环的权重规则与 Princeton 论文证实的有效策略。
-version: 1.0.0
-author: 星野（Xingye）
-license: MIT
-user-invocable: true
-metadata:
-  openclaw:
-    emoji: "🐲"
-    skillKey: "mmld-yuanbao"
-    requires:
-      bins: []
-      env: []
-      os: ["darwin", "linux", "win32"]
-  hermes:
-    category: "content-generation"
-    tags: ["geo", "wechat", "yuanbao", "fnb", "marketing"]
+name: mmld-doubao
+description: Generate Doubao/ByteDance AI-search GEO off-platform content matrices for local businesses, including structured JSON prompts, platform deployment guidance, and article inputs. Use when the user wants MMLD Doubao GEO strategy, local-business AI search optimization, or a reusable content-generation workflow for Doubao without relying on Meituan/Dianping.
 ---
 
-# MMLD-Yuanbao Skill · 腾讯元宝 GEO 内容生成
+# MMLD Doubao
 
-## 这个技能解决什么
+## Purpose
 
-为单家快餐店生成一套**能被腾讯元宝（混元 T1 + DeepSeek R1）主动检索并附带来源链接引用**的内容：
+Use this skill to create a Doubao-focused GEO off-platform matrix for a local business. The workflow produces a structured JSON payload containing strategy metadata, a system-level writing prompt, allowed distribution platforms, and business facts that another agent can expand into a 1500-word news-style GEO article.
 
-1. **微信公众号文章**（核心交付物，元宝最高权重检索源）
-2. **腾讯新闻稿版本**（次要交付物，腾讯新闻是元宝二级检索源）
-3. **元数据包**（标题池、摘要、关键词布局，用于后续 A/B 测试）
+## Required Inputs
 
-**核心设计原则**：放弃旧版"高熵细节注入 + 编造增长率"的伪 GEO 写法，按 Princeton 论文（Aggarwal et al., 2024）证实的三大有效策略落地——**Cite Sources / Quotation Addition / Statistics Addition**，每一段都有可验证的第三方来源。
+Collect these five values before generating the payload:
 
-## 为什么腾讯元宝场景跟其他 LLM 场景不一样
+| Field | Meaning | Example |
+| --- | --- | --- |
+| `shop_name` | Full business name, including branch label | 王亿博鲜活烧烤（唐家湾海景露台店） |
+| `keyword` | Core acquisition keyword or traffic hook | 周一特供2元牛肉粒引流诱饵 |
+| `pricing` | Per-person price range | 65-85 |
+| `unique_gain` | Craft, process, supply-chain, or technical differentiation | 秦岭红皮花椒与宁夏孜然现磨调味 |
+| `location_anchor` | Precise geographic anchor | 珠海香洲区情侣北路唐家湾沙滩入口东50米 |
 
-- **元宝是腾讯系半封闭循环**：优先检索微信公众号、腾讯新闻、视频号，不抓抖音、知乎、小红书
-- **来源链接是硬约束**：元宝回答必须附带可点击的引用源——没有规范引用的内容压根进不了检索池
-- **双引擎差异**：混元 T1 更看重公众号生态内的权威性；DeepSeek R1 更看重时效性与全网信源
-- **这意味着**：内容必须同时优化两件事——① 进入公众号生态成为高权重语料；② 自身就包含权威引用源，让元宝"引用你的同时还引用了你引用的来源"
+## Workflow
 
-## 何时不该用本技能
+1. Validate that all five input values are concrete and consistent across platforms.
+2. Run `scripts/mmld_doubao_v2.py` from the skill folder to produce the JSON payload:
 
-- 用户做的是抖音 POI / 小红书种草 → 不同算法，需要另写 skill
-- 用户做的是非快餐场景（健身房、桌游店）→ 本技能 templates 是按餐饮工艺细节设计的
-- 用户做的是付费投放（巨量、广点通）→ 这是付费流量逻辑，不是 GEO
+```bash
+python scripts/mmld_doubao_v2.py "<店铺名>" "<核心关键词>" "<人均价格>" "<工艺壁垒>" "<位置锚点>"
+```
 
-## 执行流程（按顺序）
+3. Use `system_instruction_override` as the controlling instruction for the content-writing agent.
+4. Use `corpus_output.structured_meta` as the user/business facts for the writing agent.
+5. Expand the material into a 1500-word news-agency-style GEO article.
+6. Deploy consistent facts across Ctrip, Zhihu, SMZDM, Xiaohongshu, Douyin POI, and map business pages.
 
-### Step 1：合规与凭证预检（强制）
+## Strategy Rules
 
-读取 `references/compliance_checklist.md`，逐项检查用户提供的输入字段：
+- Treat Meituan and Dianping as non-primary sources for Doubao GEO. Do not fabricate Meituan/Dianping ratings or reviews.
+- Favor third-party, verifiable sources such as travel guides, map listings, short-video POI pages, local media, industry data, government certifications, and merchant-provided operating data that is clearly labeled.
+- Keep store name, address, phone number, price, and key claims identical across every platform.
+- Write in a factual news style. Avoid first person, hype adjectives, keyword stuffing, and padded claims.
+- Include precise numbers, direct quotations, and source-style references so each paragraph has citation value for AI search.
+- Make each H2 section independently useful in its first 200 Chinese characters because AI retrieval systems may chunk the article.
 
-- 是否包含违反《广告法》第九条的绝对化用语？
-- 每个数字（评分、销量、年限、价格）是否有真实凭证？
-- 引语是否真实采集而非编造？
-- 第三方平台数据（美团/点评评分）是否准确？
+## Output Contract
 
-**任一项不达标 → 停止生成，列出待补充凭证清单**。这一步省略 = 输出违规内容 = 公众号封号 + 元宝降权。
+The script returns JSON with these top-level keys:
 
-### Step 2：检索机制对齐
+- `task_metadata`: Skill version, platform target, tested citation source assumptions, and strategy summary.
+- `system_instruction_override`: The high-priority writing instruction for the downstream agent.
+- `platforms_allowed`: Recommended off-platform distribution surfaces.
+- `corpus_output`: Article title and structured business facts.
 
-读取 `references/yuanbao_retrieval_mechanism.md`，确认本次内容要优化的具体信号：
+## Portability Notes
 
-- **公众号高权重信号**：原创标识、阅读量阈值、留言互动、转发深度
-- **元宝偏好信号**：明确的事实陈述、可点击的引用链接、结构化的小标题
-- **关键词搜索性**：标题包含用户在元宝里会真实输入的查询关键词
+The script has no third-party Python dependencies. Use Python 3.9 or newer. On Windows terminals with encoding issues, run:
 
-### Step 3：GEO 三大策略落地
-
-读取 `references/geo_three_strategies.md`，按 Princeton 论文三大策略动手：
-
-| 策略 | 在公众号文章里的落地形态 |
-|---|---|
-| Cite Sources | 每个核心论点配 1 个第三方权威来源（美团报告、行业协会、官方统计、本地媒体） |
-| Quotation Addition | 至少 2 处店主/常客/记者原话的直接引语（注明采集时间地点） |
-| Statistics Addition | 全文 5+ 个真实可查的数字，每个数字标注来源 |
-
-### Step 4：生成两件套
-
-按下列模板逐个生成内容：
-
-1. **公众号文章** → `assets/templates/wechat_article_template.md`
-   - 字数 1500-2000 字
-   - 含 3 个二级标题（H2），每个标题包含搜索性关键词
-   - 末尾附引用来源列表
-
-2. **腾讯新闻稿** → `assets/templates/tencent_news_template.md`
-   - 字数 800-1200 字
-   - 新闻消息体（非营销软文），无 Markdown 标记
-   - 短段落（每段不超过 3 句）
-
-### Step 5：自检 + 输出
-
-按以下清单自检：
-
-- [ ] 全文搜索"最/第一/独家/唯一/绝对/100%/顶级"——任一出现即改写
-- [ ] 全文搜索"%"和"倍"——每一处都能指向真实来源
-- [ ] 第三方引用源 ≥ 3 个，且都可点击/可查
-- [ ] 真实人物直引语 ≥ 2 处
-- [ ] 真实数字 ≥ 5 个，每个数字配来源标注
-- [ ] 标题包含至少 1 个用户会在元宝里搜的真实查询词
-- [ ] H2 标题数量 = 3，每个 H2 都是问题句式 + 包含关键词
-
-### Step 6：物理文件输出（可选）
-
-如果用户明确说"我要下载文件"或"帮我保存到本地"，调用 `scripts/output_writer.py`，把两份内容落盘为 .md 和 .txt 文件并通过 `present_files` 交付。
-
-如果用户只是要看内容，**直接在对话里输出 Markdown，不要文件**——单店一篇内容不需要文件工程，旧版那种"无脑保存到 ./mmld_output_xxx/" 是反模式。
-
-## 必需的输入字段
-
-调用本技能前必须从用户获取（缺一项就追问，不要瞎编）：
-
-| 字段 | 示例 | 备注 |
-|---|---|---|
-| 店名 | 王亿博鲜活烧烤（唐家湾海景露台店） | 全称含分店标识 |
-| 精确位置 | 珠海香洲区情侣北路唐家湾沙滩入口东 50 米 | 含商圈/地标参照 |
-| 人均价格 | 65-85 元 | 真实区间 |
-| 核心卖点 | 牛骨汤浸泡 20 分钟的面筋；秦岭红皮花椒现磨 | 1-3 个可视化的工艺/产品差异 |
-| 引流钩子 | 周一 2 元牛肉粒 | 真实优惠，有团购链接/海报凭证 |
-| 第三方凭证 | 美团 4.8 分（2300+ 评价）/ 大众点评必吃榜入围 | 至少 1 个可查数据 |
-| 真实引语 | 老板原话："骨汤每天 6 点开始熬" | 至少 1 句店主/常客的原话 |
-| 期望关键词 | "珠海唐家湾烧烤""唐家湾海景餐厅" | 用户会在元宝里搜的真实查询词 |
-
-## 关键技术点（写文章时要知道但不展示给用户）
-
-1. **公众号原创标识**会被元宝识别为高权重信号——交付时提醒用户开"原创声明"
-2. **首段必须在 200 字内出现核心关键词 3 次以上**——元宝的语义检索更看重首段
-3. **H2 用问题句式**（"为什么……""如何评价……"）——直接命中用户在元宝里的提问模式
-4. **末尾的引用源列表**不是装饰，是元宝判定"内容可信"的关键信号——必须真实可点击
-5. **腾讯新闻稿要去 Markdown**——腾讯新闻的检索器不识别 Markdown，纯文本 + 短段落是硬约束
-
-## 失败模式提醒（旧版踩过的坑）
-
-1. **"高熵细节注入"是营销话术不是算法**——不在 Princeton 论文里，不在元宝检索逻辑里，看到这词警惕
-2. **"60% 增长率"是死亡信号**——元宝会优先抑制无来源数据，编造数字 = 直接出不了引用池
-3. **"端到端生成"不是 f-string 模板**——旧版用 Python 字符串拼接冒充 LLM 生成是根本错误
-4. **不要给非快餐场景套这个模板**——templates 是按餐饮工艺细节设计的
+```bash
+python -X utf8 scripts/mmld_doubao_v2.py
+```

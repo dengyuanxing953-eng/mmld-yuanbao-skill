@@ -1,0 +1,13 @@
+{
+  "name": "mmld-doubao",
+  "version": "2.0.1",
+  "description": "Doubao/ByteDance AI-search GEO off-platform matrix generator for local-business content workflows.",
+  "entrypoint": "scripts/mmld_doubao_v2.py",
+  "skill": "SKILL.md",
+  "runtime": {
+    "python": ">=3.9",
+    "dependencies": []
+  },
+  "platforms": ["linux", "macos", "windows"],
+  "license": "MIT"
+}
