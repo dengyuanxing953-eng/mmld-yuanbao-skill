@@ -8,6 +8,12 @@
 \[!\[OpenClaw](https://img.shields.io/badge/OpenClaw-Supported-orange)]()
 \[!\[Claude Code](https://img.shields.io/badge/Claude%20Code-Supported-green)]()
 
+## English Summary
+
+**MMLD-Yuanbao** is an open-source Agent Skill that implements the three core strategies from Princeton's GEO paper (Aggarwal et al., 2024, [arXiv:2311.09735](https://arxiv.org/abs/2311.09735)) — Cite Sources, Quotation Addition, Statistics Addition — to make merchant content discoverable and citable inside Tencent Yuanbao's retrieval engine.
+
+Built to the cross-platform [AgentSkills](https://agentskills.io) spec, it runs on **OpenClaw, Codex, Claude Code, and Hermes**. Unlike keyword-stuffing "GEO tools" (which the Princeton paper shows are ineffective), this is a faithful, auditable implementation of the research, with a full end-to-end [example](examples/) in the repo. The detailed documentation below is in Chinese, as the skill targets Chinese-language platforms (WeChat Official Accounts, Tencent News).
+
 ## 这是什么
 
 MMLD-Yuanbao 是一个 Agent Skill 包，让 AI Agent 为快餐店自动生成**能被腾讯元宝（混元 T1 + DeepSeek R1 双引擎）主动检索并附带来源链接引用**的内容：
